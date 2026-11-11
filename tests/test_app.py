@@ -83,8 +83,25 @@ def test_ortools_and_exact_buttons_work_and_are_cached_per_setting():
     at.button(key="exact_start").click().run(timeout=TIMEOUT)
     assert not at.exception, [str(e) for e in at.exception]
     assert any("Optimum" in w.value for w in list(at.success) + list(at.info) + list(at.warning))
-    at.sidebar.select_slider(key="n_slider").set_value(40).run(timeout=TIMEOUT)   # n > 25: der Optimum-Tab bietet den Knopf nicht an
+    at.sidebar.select_slider(key="n_slider").set_value(40).run(timeout=TIMEOUT)   # 40 Kunden, 2 Fahrzeuge, 0,5: gemessen, 0 von 30 bewiesen -> Knopf nicht angeboten
     assert not at.exception and not [b for b in at.button if b.key == "exact_start"]
+    assert any("0 von 30 Instanzen das Optimum" in i.value for i in at.info)
+
+
+def test_exact_button_follows_the_measured_proof_share_above_25_customers():
+    """Regel: über 25 Kunden nur in gemessenen Zellen mit mindestens 80 % bewiesenen Instanzen (3 Fahrzeuge / 0,3; 4 Fahrzeuge / 0,3 und 0,4 bei 40 Kunden)."""
+    at = _fresh_app()
+    at.sidebar.select_slider(key="n_slider").set_value(40).run(timeout=TIMEOUT)
+    at.sidebar.slider(key="k_slider").set_value(4).run(timeout=TIMEOUT)
+    at.sidebar.select_slider(key="f_slider").set_value(0.3).run(timeout=TIMEOUT)
+    assert not at.exception, [str(e) for e in at.exception]
+    assert [b for b in at.button if b.key == "exact_start"], "40 Kunden, 4 Fahrzeuge, 0,3: gemessen 30 von 30, Knopf muss da sein"
+    at.sidebar.select_slider(key="f_slider").set_value(0.5).run(timeout=TIMEOUT)   # 10 von 30 bewiesen
+    assert not at.exception and not [b for b in at.button if b.key == "exact_start"]
+    assert any("10 von 30 Instanzen das Optimum" in i.value for i in at.info)
+    at.sidebar.select_slider(key="n_slider").set_value(60).run(timeout=TIMEOUT)    # nicht gemessen
+    assert not at.exception and not [b for b in at.button if b.key == "exact_start"]
+    assert any("nicht gemessen" in i.value for i in at.info)
 
 
 def test_plans_and_pdf_do_not_crash_for_every_view():

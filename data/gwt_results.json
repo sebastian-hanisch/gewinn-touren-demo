@@ -1164,6 +1164,152 @@
    }
   }
  ],
+ "exact_cells": [
+  {
+   "n": 40,
+   "K": 1,
+   "f": 0.3,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 1,
+   "f": 0.4,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 1,
+   "f": 0.5,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 2,
+   "f": 0.3,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 1,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 3.6835505962371826,
+   "max_sec_proven": 3.6835505962371826,
+   "ils_equals_optimum": 1
+  },
+  {
+   "n": 40,
+   "K": 2,
+   "f": 0.4,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 2,
+   "f": 0.5,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 3,
+   "f": 0.3,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 29,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 1.031010808615849,
+   "max_sec_proven": 6.031456708908081,
+   "ils_equals_optimum": 29
+  },
+  {
+   "n": 40,
+   "K": 3,
+   "f": 0.4,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 5,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 8.656199169158935,
+   "max_sec_proven": 11.810396194458008,
+   "ils_equals_optimum": 5
+  },
+  {
+   "n": 40,
+   "K": 3,
+   "f": 0.5,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 0,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": null,
+   "max_sec_proven": null,
+   "ils_equals_optimum": 0
+  },
+  {
+   "n": 40,
+   "K": 4,
+   "f": 0.3,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 30,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 0.04642258485158284,
+   "max_sec_proven": 0.6472036838531494,
+   "ils_equals_optimum": 30
+  },
+  {
+   "n": 40,
+   "K": 4,
+   "f": 0.4,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 29,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 1.9495271896493847,
+   "max_sec_proven": 12.392657995223999,
+   "ils_equals_optimum": 29
+  },
+  {
+   "n": 40,
+   "K": 4,
+   "f": 0.5,
+   "ptype": "lognormal",
+   "n_inst": 30,
+   "proven": 10,
+   "seconds_limit": 20.0,
+   "mean_sec_proven": 5.385622882843018,
+   "max_sec_proven": 18.837238311767578,
+   "ils_equals_optimum": 10
+  }
+ ],
  "ablation": [
   {
    "G": 86.9819222007833,

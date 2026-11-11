@@ -205,6 +205,13 @@ st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch",
                             "Schranke über dem Besten, nicht bewiesene Instanzen (%)": st.column_config.NumberColumn(format="%.0f")})
 st.caption("CP-SAT, 30 s, ein Worker, Warmstart aus dem besseren von ILS und OR-Tools. Wo das Optimum nicht bewiesen ist, liegt die Schranke bei Budgetanteil 0,4 bis 0,65 um 42 bis 100 % über dem Besten und sagt über die Güte der Heuristiken wenig; erst bei Budgetanteil 1,0 liegt sie nur 4 % darüber; "
            "„bester bekannter Wert“ ist dort das Maximum der Verfahren, meist die eigene Suche.")
+rows40 = [{"Kunden": c["n"], "Fahrzeuge": c["K"], "Budgetanteil": c["f"], "Optimum bewiesen (von 30)": c["proven"],
+           "Mittel der Rechenzeit bewiesener Läufe (s)": c["mean_sec_proven"], "Knopf im Tab Exakt": "ja" if R.exact_offered(c["n"], c["K"], c["f"], c["ptype"])[0] else "nein"}
+          for c in sorted(R.load()["exact_cells"], key=lambda c: (c["n"], c["K"], c["f"]))]
+st.dataframe(pd.DataFrame(rows40), hide_index=True, width="stretch",
+             column_config={"Budgetanteil": st.column_config.NumberColumn(format="%.1f"), "Mittel der Rechenzeit bewiesener Läufe (s)": st.column_config.NumberColumn(format="%.1f")})
+st.caption(f"Dasselbe bei 40 Kunden, gestreute Prämien, wie im Tab Exakt gerechnet (höchstens {R.num(C.EXACT_SECONDS, 0)} s, ein Worker, Warmstart aus dem ILS mit 300 Iterationen, 30 Instanzen je Zeile). "
+           f"Der Knopf wird dort angeboten, wo in mindestens {R.num(100 * C.EXACT_MIN_PROOF_SHARE, 0)} % der Instanzen ein Optimum bewiesen wurde (gesetzter Schwellenwert); wo nicht, ist der Anteil des ILS am Besten nicht am Optimum geprüft.")
 
 st.markdown("---")
 
@@ -262,11 +269,14 @@ with st.expander("🔧 Wie wir das erreichen – vollständiger Methodenvergleic
                 getattr(st, kind)(text)
     with tab_exact:
         # Der Tab ist selbstständig: eigener Button, Spinner und Ergebnis, gegen das aktuelle Szenario geprüft (DEMO-PLAYBOOK §2).
-        if settings.n > C.EXACT_N_MAX:
-            st.info(f"Bei n = {settings.n} Kunden wird das exakte Verfahren nicht angeboten: In der Messreihe beweist CP-SAT bei 25 Kunden ab Budgetanteil 0,5 kaum noch ein Optimum, "
-                    "bei 40 Kunden und Budgetanteil 0,4 mit 1 bis 2 Fahrzeugen keines (mit 4 Fahrzeugen 29 von 30); bei 60 Kunden wurde es nicht versucht (siehe Kernfrage 3 und Tab Messreihe).")
+        exact_ok, exact_cell_ = R.exact_offered(settings.n, settings.k, settings.f, settings.ptype)
+        if not exact_ok:
+            st.info(E.exact_unavailable_text(settings))
         else:
             st.markdown(f"CP-SAT (Kreise mit Selbstschleife für „nicht bedient“, ein Worker, höchstens {R.num(C.EXACT_SECONDS, 0)} s, Warmstart aus der eigenen Suche).")
+            if exact_cell_ is not None:
+                st.caption(f"Gemessen: bei dieser Kombination bewies CP-SAT in {exact_cell_['proven']} von {exact_cell_['n_inst']} Instanzen das Optimum "
+                           f"(im Mittel {R.num(exact_cell_['mean_sec_proven'])} s, höchstens {R.num(exact_cell_['max_sec_proven'])} s; Warmstart aus dem ILS mit 300 Iterationen).")
             if st.button("Optimum berechnen", key="exact_start"):
                 st.session_state["exact_done"] = settings
                 st.rerun()
@@ -314,7 +324,7 @@ aufgerundet 1,2 × Distanz (Dreiecksungleichung gilt).
 - *Lokalsuche:* Routenzüge, Einfügen, Ersetzen (siehe Tab Zugarten).
 - *Eigene Suche (ILS):* Kunden entfernen, verrauscht neu einfügen, Lokalsuche; deterministisch bei gleichem Seed und gleicher Iterationszahl.
 - *OR-Tools:* Routing mit Strafe für nicht bediente Kunden, in zwei Einstellungen.
-- *CP-SAT:* exakt, mit Schranke; nur bis {C.EXACT_N_MAX} Kunden angeboten.
+- *CP-SAT:* exakt, mit Schranke; bis {C.EXACT_N_MAX} Kunden immer angeboten, darüber nur dort, wo die Messreihe in mindestens {R.num(100 * C.EXACT_MIN_PROOF_SHARE, 0)} % der Instanzen ein Optimum bewies.
 
 **„Bester bekannter Wert“** ist das Maximum aller Verfahren auf der Instanz (bei bewiesenem Optimum das Optimum). Die eigene Suche stellt dabei meist das Maximum: Ihr Anteil ist daher per Konstruktion nahe 100 %.
 Wo kein Optimum bewiesen ist, kann das wahre Optimum höher liegen.
@@ -329,7 +339,7 @@ die eingestellte Kombination ist nur dann gemessen, wenn es dazu eine Zelle gibt
 | Keine Zeitfenster | Mit Zeitfenstern (TOPTW) wird auch die Reihenfolge zur Zulässigkeitsfrage; die Messreihe sagt dazu nichts | Ausbau |
 | Orte gleichverteilt, keine Cluster | Bei Clustern kann sich der Abstand der Verfahren ändern | nicht gemessen |
 | Prämien frei gewählt (gleich, gestreut, fern) | Die Prämienart verändert den Abstand der Verfahren (ILS minus OR-Tools Standard bei Budgetanteil 0,4: {R.num(_gap_std('gleich'), 1, True)} gleich, {R.num(_gap_std('lognormal'), 1, True)} gestreut, {R.num(_gap_std('fern'), 1, True)} fern); ein Regler für das Verhältnis Prämie zu Fahrzeit wurde nicht gemessen | Regler „Prämien“ |
-| Bester bekannter Wert statt Optimum | Anteile des ILS sind nahe 100 %; bei 40 Kunden und 1 bis 2 Fahrzeugen gelang kein Beweis (Budgetanteil 0,4), bei 60 Kunden wurde er nicht versucht | Kernfrage 3 |
+| Bester bekannter Wert statt Optimum | Anteile des ILS sind nahe 100 %; bei 40 Kunden bewies CP-SAT in mindestens 80 % der Instanzen nur mit 3 Fahrzeugen bei Budgetanteil 0,3 und mit 4 Fahrzeugen bei 0,3 bis 0,4 (mit 1 bis 2 Fahrzeugen in 1 von 180 Instanzen); bei 60 Kunden wurde es nicht versucht | Kernfrage 3, Tab Exakt |
 | OR-Tools in zwei Einstellungen | Aussagen über OR-Tools gelten für diese Einstellungen, nicht für das Verfahren; die abgestimmte Einstellung überträgt sich nicht auf gleiche Prämien | Tab OR-Tools |
 | Rechenzeiten | Auf anderen Rechnern anders; OR-Tools und CP-SAT sind zeitlimitiert und nicht bitgleich reproduzierbar | Tab Verfahren |
 """

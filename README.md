@@ -27,7 +27,7 @@ deterministisch (Zufalls-Seed).
 - **Eigene Suche (ILS)** (`ils`): einige Kunden entfernen (ein Stück Tour oder zufällige), verrauscht wieder einfügen, Lokalsuche, Übernahme, wenn nicht schlechter; deterministisch bei gleichem Zufalls-Seed und gleicher Iterationszahl.
 - **OR-Tools** (`solve_ortools`): Routing mit Strafe für nicht bediente Kunden; *zeitgleich* heißt, dass OR-Tools so lange läuft wie der ILS auf derselben Instanz (mindestens 5, höchstens 30 Sekunden). *Standard*: Guided Local Search, Strafe 1000 × Prämie. *Abgestimmt*: Tabu-Suche, Warmstart aus dem Verhältnis-Greedy, neun zusätzliche Operatoren,
   Strafe 3 × 60 × Prämie ÷ mittlere Prämie; die Einstellung wurde auf getrennten Instanzen (Zufalls-Seeds 1000 bis 1011) aus acht Kandidaten gewählt. Die Spalten „abgestimmt“ bei gestreuten Prämien stammen aus Läufen mit Strafe 3 × Prämie ohne Normierung (bei Mittel 60 nahezu dieselbe Skala); die Normierung kam nach dem Einbruch bei gleichen Prämien dazu, die Zellen „gleich“ und „fern“ wurden mit ihr neu gemessen.
-- **CP-SAT** (`solve_cpsat`): Mehrfach-Kreis mit Selbstschleife für „nicht bedient“, ein Worker, Warmstart aus der eigenen Suche, liefert Status und Schranke; in der App nur bis 25 Kunden angeboten.
+- **CP-SAT** (`solve_cpsat`): Mehrfach-Kreis mit Selbstschleife für „nicht bedient“, ein Worker, Warmstart aus der eigenen Suche, liefert Status und Schranke; in der App bis 25 Kunden immer angeboten, darüber nur dort, wo die Messreihe bei 40 Kunden in mindestens 80 % der Instanzen ein Optimum bewies (3 von 12 gemessenen Zellen; Schwelle gesetzt, nicht hergeleitet).
 - **Bester bekannter Wert** = Maximum aller Verfahren auf der Instanz (bei bewiesenem Optimum das Optimum). **Anteil am Besten** = Prämie ÷ bester Wert; „Punkte“ sind Prozentpunkte dieses Anteils.
 
 ## Befunde (gemessen, keine Behauptungen)
@@ -45,6 +45,7 @@ Die Zahlen stammen aus der Vorab-Messreihe (meist Zufalls-Seeds 0 bis 29, 30 Ins
 | Wie oft schlägt OR-Tools (abgestimmt, zeitgleich) den ILS? (840 Instanzen der Sweeps) | in 1 von 840 Instanzen strikt besser (mit der Standard-Einstellung in 4 von 840); gleichauf mit dem ILS in 337 von 831 nicht leeren Instanzen (9 Instanzen sind leer, das heißt: kein Kunde erreichbar) |
 | Wie weit liegt der ILS vom Optimum? (1 Fahrzeug, 20 Kunden, Budgetanteil 0,5, 20 Instanzen, exaktes Optimum) | ILS 100,0 % des Optimums (unter dem Optimum in 0 von 20), Verhältnis-Greedy 92,9 % (16 von 20), plus Lokalsuche 94,8 % (14 von 20), OR-Tools (Standard) 87,6 % (17 von 20) |
 | Wie weit beweist CP-SAT? (25 Kunden, 2 Fahrzeuge, gestreut, 30 s, ein Worker) | Optimum bewiesen in 30 / 30 / 23 / 3 / 0 / 0 / 0 / 5 von 30 Instanzen bei Budgetanteil 0,2 / 0,3 / 0,4 / 0,5 / 0,65 / 0,7 / 0,8 / 1,0 (8 Zellen); Schranke bei Budgetanteil 0,5 im Mittel 80 % über dem besten bekannten Wert der nicht bewiesenen Instanzen |
+| Wo beweist CP-SAT bei 40 Kunden das Optimum? (gestreut, 20 s, ein Worker, Warmstart aus dem ILS mit 300 Iterationen, 12 Zellen mit je 30 Instanzen) | Optimum bewiesen bei 1 / 2 / 3 / 4 Fahrzeugen und Budgetanteil 0,3: 0 / 1 / 29 / 30 von 30; bei 0,4: 0 / 0 / 5 / 29; bei 0,5: 0 / 0 / 0 / 10. Mit 1 bis 2 Fahrzeugen also in 1 von 180 Instanzen. Der Exakt-Knopf wird bei 40 Kunden nur in den 3 Zellen mit mindestens 80 % angeboten (3 Fahrzeuge bei 0,3; 4 Fahrzeuge bei 0,3 und 0,4); in allen 104 bewiesenen Instanzen war das Optimum gleich dem Wert des ILS-Warmstarts (104 von 104) |
 | Lässt sich der ILS verbessern? (7 Varianten, 5 s, getrennte Instanzen) | keine der 7 Varianten ist im Mittel besser: der jetzige ILS liegt bei 99,92 % des Besten, die beste Variante bei 99,68 %, ein zehnmal längerer Lauf des jetzigen ILS (kein Variantenkandidat) bei 99,97 %; ILS mit 30000 statt 3000 Iterationen findet in 5 von 30 Instanzen mehr (n = 40 und 60) |
 | Wirkt die Abstimmung von OR-Tools? (8 Kandidaten, 5 Zellen mit je 12 Instanzen = 60 Instanzen, Zufalls-Seeds 1000 bis 1011) | gewählt wurde die Einstellung mit 96,48 % des ILS gegen 94,52 % für die Standard-Einstellung (gewählt und bewertet auf denselben Instanzen; die Wirkung zeigt der Vergleich der Spalten in der Messreihe: abgestimmter Rückstand kleiner in 21 von 28 Zellen, größer in 6, gleich in 1) |
 | Wie gut ist der ILS bei kleinem Rechenbudget? (2 Fahrzeuge, Budgetanteil 0,5, gestreut, je 10 Instanzen) | bei 300 Iterationen im Mittel über 10 Instanzen mindestens 99,4 % des besten der drei Läufe mit 300, 1000 und 3000 Iterationen (n = 15, 25, 40, 60; bei n = 60 die schlechteste Instanz 95,1 %), Rechenzeit bei n = 60 im Mittel 2,7 s statt 27,4 s bei 3000 Iterationen |
@@ -52,7 +53,7 @@ Die Zahlen stammen aus der Vorab-Messreihe (meist Zufalls-Seeds 0 bis 29, 30 Ins
 ## Ehrliche Grenzen
 
 - **Keine Zeitfenster, keine Cluster:** Orte gleichverteilt, Fahrzeiten deterministisch, eine Tour je Fahrzeug; Prämien und ihr Verhältnis zur Fahrzeit frei gewählt. Mit Zeitfenstern (Team Orienteering mit Zeitfenstern) ist die Reihenfolge auch eine Zulässigkeitsfrage; dazu sagt die Messreihe nichts.
-- **Der ILS ist mein eigenes Verfahren und stellt meist den „besten bekannten Wert“:** sein Anteil ist per Konstruktion nahe 100 %. Bewiesen ist das Optimum nur bei kleinen Touren (wenige Kunden je Fahrzeug oder knappes Budget); wo es nicht bewiesen ist, kann es höher liegen
+- **Der ILS ist mein eigenes Verfahren und stellt meist den „besten bekannten Wert“:** sein Anteil ist per Konstruktion nahe 100 %. Bewiesen ist das Optimum nur bei kleinen Touren (wenige Kunden je Fahrzeug oder knappes Budget; bei 40 Kunden mit 1 bis 2 Fahrzeugen in 1 von 180 Instanzen, mit 3 bis 4 Fahrzeugen bei Budgetanteil 0,5 in 10 von 60 Instanzen); bei 60 Kunden wurde es nicht versucht; wo es nicht bewiesen ist, kann es höher liegen
   (der Konvergenzvergleich begrenzt den Fehler gegenüber einem zehnmal längeren eigenen Lauf, nicht gegenüber dem Optimum).
 - **OR-Tools nur in zwei Einstellungen:** die Aussagen gelten für diese Einstellungen, nicht für das Verfahren. Die abgestimmte Einstellung überträgt sich bei 25 Kunden und 2 Fahrzeugen nicht auf gleiche Prämien (Budgetanteil 0,4: deutlich schlechter als Standard, 0,7: weniger). Der abgestimmte Rückstand ist in 21 von 28 Zellen kleiner als der Standard-Rückstand, in 6 größer (gleiche Prämien, 15 und 20 Kunden, 4 Fahrzeuge) und in 1 gleich.
   Ob weitere Einstellungen (anderes Dimensionsmodell, Mehrfachstart, mehr Threads) oder längere Läufe den Rückstand weiter senken, wurde nicht gemessen.
@@ -88,7 +89,7 @@ Die Zahlen stammen aus der Vorab-Messreihe (meist Zufalls-Seeds 0 bis 29, 30 Ins
 | `gwt_visualization.py` | Plotly-Abbildungen (Achsen gesperrt) |
 | `gwt_pdf_export.py` | Tourenplan als PDF (fpdf2) |
 | `gwt_layout.py` | Fester Kopf (Stylesheet) |
-| `data/gwt_results.json` | Aggregate der Vorab-Messreihe (28 Zellen, Ablation, Optimum, Varianten, Abstimmung) |
+| `data/gwt_results.json` | Aggregate der Vorab-Messreihe (28 Zellen, 12 Beweiszellen bei 40 Kunden, Ablation, Optimum, Varianten, Abstimmung) |
 | `data/gwt_ils_budget.json` | Güte und Zeit des ILS bei 300 / 1000 / 3000 Iterationen |
 | `tools/dump_results.py` | erzeugt `gwt_results.json` aus den Dateien der Messreihe |
 | `tools/measure_ils_budget.py` | erzeugt `gwt_ils_budget.json` |
@@ -101,7 +102,7 @@ Die Zahlen stammen aus der Vorab-Messreihe (meist Zufalls-Seeds 0 bis 29, 30 Ins
 
 - **Zeitfenster** (Team Orienteering mit Zeitfenstern), Wartezeiten, unsichere Fahrzeiten, mehrere Touren je Fahrzeug.
 - **Online-Eingang neuer Kunden** und Annahmeentscheidungen im Tagesverlauf: das ist `nahverkehr-demo`.
-- **Weitere Verfahren** (ALNS, genetische Verfahren, Schnittebenen oder Branch-and-Price für einen Beweis bei 40 Kunden und wenigen Fahrzeugen).
+- **Weitere Verfahren** (ALNS, genetische Verfahren, Schnittebenen oder Branch-and-Price für einen Beweis bei 40 Kunden und 1 bis 2 Fahrzeugen).
 - **Echte Straßennetze und Kalibrierung an echten Daten.**
 
 ## Verwandte Demos mit demselben mathematischen Modell

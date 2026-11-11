@@ -158,6 +158,26 @@ def verdict_exact(a: Analysis, status: str, prize: int | None, bound: float | No
     return "warning", f"Optimum nicht bewiesen im Zeitlimit: beste gefundene Prämie {prize} (ILS {d}).{bound_text}"
 
 
+def exact_unavailable_text(s: Settings) -> str:
+    """Meldung im Exakt-Tab, wenn der Knopf nicht angeboten wird (s.n > EXACT_N_MAX und keine Beweiszelle mit genug Beweisen): sagt, was gemessen ist und was fehlt."""
+    cells = R.load().get("exact_cells", [])
+    share_pct = f"{R.num(100 * C.EXACT_MIN_PROOF_SHARE, 0)} %"
+    offered = "; ".join(f"{c['n']} Kunden, {c['K']} Fahrzeuge, Budgetanteil {R.num(c['f'])}" for c in R.exact_offered_cells())
+    cell = R.exact_cell(s.n, s.k, s.f, s.ptype)
+    if cell is not None:
+        head = (f"Bei {s.n} Kunden, {s.k} Fahrzeugen, Budgetanteil {R.num(s.f)} und gestreuten Prämien bewies CP-SAT in der Messreihe in {cell['proven']} von {cell['n_inst']} Instanzen das Optimum "
+                f"(höchstens {R.num(cell['seconds_limit'], 0)} s, ein Worker, Warmstart aus der eigenen Suche); der Knopf wird erst ab {share_pct} angeboten.")
+    else:
+        ns = sorted({c["n"] for c in cells})
+        ks = sorted({c["K"] for c in cells})
+        fs = sorted({c["f"] for c in cells})
+        head = (f"Bei dieser Kombination ({s.n} Kunden, {s.k} Fahrzeuge, Budgetanteil {R.num(s.f)}, {C.PTYPE_WORDS[s.ptype]}) ist nicht gemessen, ob CP-SAT das Optimum beweist: "
+                f"gemessen sind {' und '.join(str(n) for n in ns)} Kunden mit {ks[0]} bis {ks[-1]} Fahrzeugen bei Budgetanteil {' / '.join(R.num(f) for f in fs)} und gestreuten Prämien "
+                "(bei 25 Kunden ab Budgetanteil 0,5 beweist CP-SAT kaum noch ein Optimum; 60 Kunden wurden nicht versucht).")
+    return (f"{head} Angeboten wird der Knopf ab {C.EXACT_N_MAX + 1} Kunden nur, wo es in mindestens {share_pct} der Instanzen bewies: {offered}. "
+            "Siehe Kernfrage 3 und Tab Messreihe.")
+
+
 def schedule(inst: S.Inst, route) -> list[tuple[int, int, int]]:
     """Halteliste einer Tour: (Kunde, Ankunft in Minuten nach Start, Prämie). Service wird nach der Ankunft verbraucht."""
     out, t, prev = [], 0, 0

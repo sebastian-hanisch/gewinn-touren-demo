@@ -4,7 +4,7 @@
 
 Gelesen werden sweep_data.json (Haupt-Sweep, OR-Tools Standard), sweep_data2.json (Ablation, n x K), sweep_data3.json (Wiederholung mit
 abgestimmtem OR-Tools), raw_k1exact.json (Optimum K = 1, n = 20), raw_ilsexp.json (ILS-Varianten), raw_conv.jsonl (Konvergenz), raw_tune.json
-(Abstimmung). Die App liest nur die erzeugte Datei; die Messreihe selbst gehoert nicht ins Repo (siehe README, Abschnitt Reproduktion)."""
+(Abstimmung), raw_exact40.jsonl (Beweisanteil von CP-SAT bei 40 Kunden). Die App liest nur die erzeugte Datei; die Messreihe selbst gehoert nicht ins Repo (siehe README, Abschnitt Reproduktion)."""
 import json
 import pathlib
 import sys
@@ -102,7 +102,20 @@ tuning = [{"name": k, "mean_share_of_ils": mean(100 * r[k] / r["ILS"] for r in T
 k1 = {"n_inst": len(K1), **{m: mean(100 * o[m] / o["opt"] for o in K1) for m in ("G_ratio", "G_LS", "GLS", "ILS")},
       "below": {m: sum(o[m] < o["opt"] for o in K1) for m in ("G_ratio", "G_LS", "GLS", "ILS")}}
 
+# Beweisanteil von CP-SAT bei 40 Kunden, gemessen wie im Exakt-Tab (ein Worker, 20 s, Warmstart aus dem ILS mit 300 Iterationen; exact40.py)
+exact_cells = []
+exact_by = {}
+for line in (src / "raw_exact40.jsonl").read_text(encoding="utf-8").splitlines():
+    r = json.loads(line)
+    exact_by.setdefault((r["n"], r["K"], r["f"]), []).append(r)
+for (n, K, f), rs in sorted(exact_by.items()):
+    proven = [r for r in rs if r["status"] == "OPTIMAL"]
+    exact_cells.append({"n": n, "K": K, "f": f, "ptype": "lognormal", "n_inst": len(rs), "proven": len(proven), "seconds_limit": 20.0,
+                        "mean_sec_proven": mean(r["sec"] for r in proven) if proven else None,
+                        "max_sec_proven": max(r["sec"] for r in proven) if proven else None,
+                        "ils_equals_optimum": sum(r["obj"] == r["ils"] for r in proven)})
+
 out = {"meta": {"n_instances_sweeps": 840, "source": "messreihe_gewinntouren (2026-11-11)", "seeds": "0-29", "tuning_seeds": "1000-1011"},
-       "cells": cells, "ablation": ablation, "k1_exact": k1, "ils_variants": ils_variants, "convergence": convergence, "tuning": tuning}
+       "cells": cells, "exact_cells": exact_cells, "ablation": ablation, "k1_exact": k1, "ils_variants": ils_variants, "convergence": convergence, "tuning": tuning}
 (here / "data" / "gwt_results.json").write_text(json.dumps(out, indent=1, ensure_ascii=False), encoding="utf-8")
 print("geschrieben:", len(cells), "Zellen,", len(ablation), "Ablationszellen")

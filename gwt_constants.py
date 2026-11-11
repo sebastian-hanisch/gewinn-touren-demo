@@ -20,7 +20,8 @@ SEED_MAX, DEFAULT_SEED = 999999, 101               # Seeds 0..29 gehoeren der Me
 SERVICE_MIN = 6                                    # Service je Kunde in Minuten
 ORTOOLS_SECONDS = 5.0                              # Zeitlimit je OR-Tools-Lauf (zwei Einstellungen)
 EXACT_SECONDS = 20.0                               # Zeitlimit CP-SAT
-EXACT_N_MAX = 25                                   # darueber nicht angeboten: bei 40 Kunden mit 1 bis 2 Fahrzeugen bewies CP-SAT in 30 s nichts (4 Fahrzeuge: 29 von 30), 60 Kunden nicht versucht
+EXACT_N_MAX = 25                                   # bis hierher immer angeboten (das Ergebnis kann eine Schranke ohne Beweis sein; die Meldung sagt es)
+EXACT_MIN_PROOF_SHARE = 0.8                        # darueber nur dort angeboten, wo die Messreihe (exact_cells: 20 s, ein Worker, Warmstart, 30 Instanzen) in mindestens diesem Anteil der Instanzen das Optimum bewies; gesetzt, nicht hergeleitet
 GAP_GREEDY_REICHT = 2.0                            # Punkte: Greedy + Lokalsuche hoechstens so weit hinter dem Besten
 GAP_AUSWAHL_ENTSCHEIDET = 6.0                      # darueber entscheidet die Auswahl (gesetzt, nicht hergeleitet)
 

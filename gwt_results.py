@@ -35,6 +35,27 @@ def nearest_cell(n, k, f, ptype, cells=None):
     return best, exact
 
 
+def exact_cell(n, k, f, ptype):
+    """Gemessene Beweiszelle von CP-SAT (nur n > EXACT_N_MAX; nur genau die eingestellte Kombination, keine naechstliegende) oder None."""
+    for c in load().get("exact_cells", []):
+        if (c["n"], c["K"], c["f"], c["ptype"]) == (n, k, f, ptype):
+            return c
+    return None
+
+
+def exact_offered(n, k, f, ptype):
+    """(angeboten, Zelle): bis EXACT_N_MAX Kunden immer; darueber nur, wo die Messreihe in mindestens EXACT_MIN_PROOF_SHARE der Instanzen das Optimum bewies."""
+    if n <= C.EXACT_N_MAX:
+        return True, None
+    cell = exact_cell(n, k, f, ptype)
+    return (cell is not None and cell["proven"] / cell["n_inst"] >= C.EXACT_MIN_PROOF_SHARE), cell
+
+
+def exact_offered_cells():
+    """Die Beweiszellen, in denen der Knopf bei n > EXACT_N_MAX angeboten wird, nach (n, K, f) sortiert."""
+    return sorted((c for c in load().get("exact_cells", []) if c["proven"] / c["n_inst"] >= C.EXACT_MIN_PROOF_SHARE), key=lambda c: (c["n"], c["K"], c["f"]))
+
+
 def gap_greedy_ls(cell):
     """Rueckstand von Verhaeltnis-Greedy plus Lokalsuche zum besten bekannten Wert in Punkten (Anteil am Besten in %)."""
     return 100.0 - cell["share"]["G_LS"]

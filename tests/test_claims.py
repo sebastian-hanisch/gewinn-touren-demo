@@ -99,6 +99,38 @@ def test_cpsat_bewiesene_zellen_und_schranke():
     assert cells[0.5]["n_unproven"] == 27
 
 
+def test_cpsat_beweise_bei_40_kunden():
+    ec = {(c["K"], c["f"]): c for c in DATA["exact_cells"]}
+    assert all(c["n_inst"] == 30 for c in ec.values()) and len(ec) == 12
+    row = lambda f: " / ".join(str(ec[(k, f)]["proven"]) for k in (1, 2, 3, 4))
+    has(f"Budgetanteil 0,3: {row(0.3)} von 30; bei 0,4: {row(0.4)}; bei 0,5: {row(0.5)}")
+    low = sum(ec[(k, f)]["proven"] for k in (1, 2) for f in (0.3, 0.4, 0.5))
+    assert low == 1 and sum(ec[(k, f)]["n_inst"] for k in (1, 2) for f in (0.3, 0.4, 0.5)) == 180
+    has("Mit 1 bis 2 Fahrzeugen also in 1 von 180 Instanzen")
+    has("in 1 von 180 Instanzen, mit 3 bis 4 Fahrzeugen bei Budgetanteil 0,5 in 10 von 60 Instanzen")
+    assert sum(ec[(k, 0.5)]["proven"] for k in (3, 4)) == 10 and sum(ec[(k, 0.5)]["n_inst"] for k in (3, 4)) == 60
+    total = sum(c["proven"] for c in ec.values())
+    assert total == 104 == sum(c["ils_equals_optimum"] for c in ec.values())
+    has("in allen 104 bewiesenen Instanzen war das Optimum gleich dem Wert des ILS-Warmstarts (104 von 104)")
+    offered = R.exact_offered_cells()
+    assert len(offered) == 3
+    has("nur in den 3 Zellen mit mindestens 80 % angeboten (3 Fahrzeuge bei 0,3; 4 Fahrzeuge bei 0,3 und 0,4)")
+    has("(3 von 12 gemessenen Zellen; Schwelle gesetzt, nicht hergeleitet)")
+    assert C.EXACT_MIN_PROOF_SHARE == 0.8 and C.EXACT_SECONDS == 20.0
+    has("20 s, ein Worker, Warmstart aus dem ILS mit 300 Iterationen, 12 Zellen mit je 30 Instanzen")
+    assert "mit 3 Fahrzeugen bei Budgetanteil 0,3 und mit 4 Fahrzeugen bei 0,3 bis 0,4 (mit 1 bis 2 Fahrzeugen in 1 von 180 Instanzen)" in APP
+
+
+def test_exakt_meldung_nennt_gemessenes():
+    import gwt_evaluation as E
+    text = E.exact_unavailable_text(E.Settings(n=40, k=2, f=0.5))
+    assert "0 von 30 Instanzen das Optimum" in text and "ab 80 %" in text and "40 Kunden, 3 Fahrzeuge, Budgetanteil 0,3" in text
+    assert "40 Kunden, 4 Fahrzeuge, Budgetanteil 0,3; 40 Kunden, 4 Fahrzeuge, Budgetanteil 0,4" in text
+    text = E.exact_unavailable_text(E.Settings(n=60, k=2, f=0.4))
+    assert "nicht gemessen" in text and "60 Kunden wurden nicht versucht" in text and "40 Kunden mit 1 bis 4 Fahrzeugen bei Budgetanteil 0,3 / 0,4 / 0,5" in text
+    assert "nur, wo es in mindestens 80 % der Instanzen bewies" in text
+
+
 def test_ils_laesst_sich_nicht_verbessern():
     v = DATA["ils_variants"]
     v0 = next(val for k, val in v.items() if k.startswith("V0 "))
@@ -192,8 +224,13 @@ def test_beweisgrenzen_der_app_texte():
     assert cell(40, 4, 0.4, "lognormal")["proven"] == 29 and not any(c["n"] == 60 and c["proven"] for c in DATA["cells"])
     bound = {f: cell(25, 2, f, "lognormal")["bound_gap_unproven"] for f in (0.4, 0.5, 0.65, 1.0)}
     assert round(min(bound[0.4], bound[0.5], bound[0.65])) == 42 and round(max(bound[0.4], bound[0.5], bound[0.65])) == 100 and round(bound[1.0]) == 4
-    for needle in ("um 42 bis 100 % über dem Besten", "nur 4 % darüber", "mit 4 Fahrzeugen 29 von 30"):
+    for needle in ("um 42 bis 100 % über dem Besten", "nur 4 % darüber"):
         assert needle in APP, needle
+    # Die 30-s-Zellen des Haupt-Sweeps (Warmstart aus dem besseren von ILS und OR-Tools) beweisen bei 40 Kunden nicht weniger als die 20-s-Messung des Exakt-Tabs (3 Fahrzeuge, 0,4: 9 gegen 5 von 30)
+    for c in DATA["exact_cells"]:
+        sweep = next((s for s in DATA["cells"] if (s["n"], s["K"], s["f"], s["ptype"]) == (c["n"], c["K"], c["f"], c["ptype"])), None)
+        if sweep is not None and sweep["proven"] is not None:
+            assert c["proven"] - 1 <= sweep["proven"] <= c["proven"] + 4, (c["K"], c["f"], sweep["proven"], c["proven"])
 
 
 def test_praemienart_zahlen_der_app_tabelle():

@@ -31,6 +31,31 @@ def test_exact_cells_are_found_exactly():
         assert exact and (cell["n"], cell["K"], cell["f"], cell["ptype"]) == (n, k, f, p)
 
 
+def test_exact_proof_cells_shape():
+    ec = R.load()["exact_cells"]
+    assert len(ec) == 12 and len({(c["n"], c["K"], c["f"]) for c in ec}) == 12
+    assert all(c["n"] == 40 and c["ptype"] == "lognormal" and c["n_inst"] == 30 and 0 <= c["proven"] <= 30 for c in ec)
+    assert {c["K"] for c in ec} == {1, 2, 3, 4} and {c["f"] for c in ec} == {0.3, 0.4, 0.5}
+    assert all((c["mean_sec_proven"] is None) == (c["proven"] == 0) and c["mean_sec_proven"] is None or 0 <= c["mean_sec_proven"] <= c["max_sec_proven"] <= c["seconds_limit"] for c in ec)
+    assert all(c["ils_equals_optimum"] <= c["proven"] for c in ec)
+
+
+def test_exact_offered_rule():
+    for n in (15, 25):                                                                     # bis EXACT_N_MAX immer
+        for k in (1, 4):
+            assert R.exact_offered(n, k, 0.65, "lognormal") == (True, None)
+    offered = {(c["n"], c["K"], c["f"]) for c in R.exact_offered_cells()}
+    assert offered == {(40, 3, 0.3), (40, 4, 0.3), (40, 4, 0.4)}                          # Beweisanteil mindestens 80 %
+    for c in R.load()["exact_cells"]:
+        ok, cell = R.exact_offered(c["n"], c["K"], c["f"], c["ptype"])
+        assert cell is c and ok == (c["proven"] / c["n_inst"] >= C.EXACT_MIN_PROOF_SHARE)
+        assert R.exact_offered(c["n"], c["K"], c["f"], "fern") == (False, None)            # nur mit gestreuten Prämien gemessen
+    assert R.exact_offered(60, 4, 0.3, "lognormal") == (False, None)                       # nicht gemessen: nicht angeboten
+    assert R.exact_offered(40, 4, 0.2, "lognormal") == (False, None)                       # Budgetanteil 0,2 nicht gemessen
+    # genau auf der Schwelle: 24 von 30 = 80 % wird angeboten, 23 von 30 nicht
+    assert 24 / 30 >= C.EXACT_MIN_PROOF_SHARE > 23 / 30
+
+
 def test_neighbour_cell_never_changes_the_prize_type():
     for ptype in C.PTYPE_OPTIONS:
         for n in C.N_OPTIONS:
@@ -82,5 +107,5 @@ def test_ils_budget_measurement_is_present_for_every_size():
 def test_dump_tool_and_data_file_are_consistent():
     """Das Werkzeug erzeugt genau die Schlüssel, die die App liest."""
     data = json.loads((ROOT / "data" / "gwt_results.json").read_text(encoding="utf-8"))
-    assert set(data) == {"meta", "cells", "ablation", "k1_exact", "ils_variants", "convergence", "tuning"}
+    assert set(data) == {"meta", "cells", "exact_cells", "ablation", "k1_exact", "ils_variants", "convergence", "tuning"}
     assert all({"n", "K", "f", "ptype", "share", "gap_std"} <= set(c) for c in data["cells"])
