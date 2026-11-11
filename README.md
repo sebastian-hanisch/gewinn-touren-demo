@@ -1,7 +1,6 @@
 # Gewinn-Touren: welche Kunden fahren wir an, in welcher Reihenfolge? – Streamlit-Demo
 
-<!-- TODO nach dem Deploy: direkt hierher den Live-Link setzen (Leerzeile davor und danach):
-**[→ Demo live ausprobieren](https://sebastianhanisch-gewinn-touren-demo.streamlit.app/)** -->
+**[→ Demo live ausprobieren](https://sebastianhanisch-gewinn-touren-demo.streamlit.app/)**
 
 Fall-Demo für die Website „Sebastian Hanisch – Operations Research und Machine Learning“ (`demos.html`). Ein Fahrer (oder wenige) hat **mehr mögliche Kunden als Zeit**: Jeder Kunde bringt eine Prämie, jede Tour hat ein
 Zeitbudget, gesucht sind **Auswahl und Reihenfolge zusammen** (Team Orienteering, Prize-Collecting-Tourenplanung ohne Zeitfenster). Verglichen werden eine Verhältnis-Regel („Prämie je Zusatzzeit“), die Regel „höchste Prämie zuerst“,
