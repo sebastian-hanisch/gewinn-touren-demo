@@ -15,9 +15,9 @@ ausdrücklich nicht umgesetztes Kriterium in `auftragsallianz-demo`.
 
 ## Modell
 
-Depot in der Mitte eines 100 × 100-Gebiets, n Kunden (15, 25, 40 oder 60) gleichverteilt, K Fahrzeuge (1 bis 4) mit je einer Tour. Fahrzeit = aufgerundet 1,2 × Distanz (die Dreiecksungleichung gilt), Service 6 Minuten je Kunde.
-Das **Zeitbudget je Tour** ist ein Anteil f (0,2 bis 1,0) eines Rundreise-Richtwerts über alle Kunden (Nächster Nachbar plus 2-opt, einschließlich Service), geteilt durch K. Die Messreihe enthält außerdem n = 20 sowie die Budgetanteile 0,1 und 0,7; diese Zellen sind in der App nicht einstellbar (Tab Messreihe). Prämien: **gleich** (10), **gestreut** (lognormal, Mittel 60, Streuung 0,6) oder **fern = wertvoll** (20 + 1,2 × Abstand zum Depot, mit etwas Rauschen).
-Ziel: die Prämiensumme der bedienten Kunden maximieren; jeder Kunde höchstens einmal, jede Tour (Fahrt, Service, Rückkehr) höchstens so lang wie das Budget. Formeln stehen im 📐-Expander der App. Alle Instanzen sind
+Depot in der Mitte eines 100 × 100-Gebiets, n Kunden (15, 25, 40 oder 60) gleichverteilt, K Fahrzeuge (1 bis 4) mit je einer Tour. Fahrzeit = aufgerundet 1,2 × Distanz (die Dreiecksungleichung gilt), Servicezeit 6 Minuten je Kunde.
+Das **Zeitbudget je Tour** ist ein Anteil f (0,2 bis 1,0) eines Rundreise-Richtwerts über alle Kunden (Nächster Nachbar plus 2-opt, einschließlich Servicezeiten), geteilt durch K. Die Messreihe enthält außerdem n = 20 sowie die Budgetanteile 0,1 und 0,7; diese Zellen sind in der App nicht einstellbar (Tab Messreihe). Prämien: **gleich** (10), **gestreut** (lognormal, Mittel 60, Streuung 0,6) oder **fern = wertvoll** (20 + 1,2 × Abstand zum Depot, mit etwas Rauschen).
+Ziel: die Prämiensumme der bedienten Kunden maximieren; jeder Kunde höchstens einmal, jede Tour (Fahrt, Servicezeit, Rückkehr) höchstens so lang wie das Budget. Formeln stehen im 📐-Expander der App. Alle Instanzen sind
 deterministisch (Zufalls-Seed).
 
 ## Methodik
@@ -67,7 +67,7 @@ Die Zahlen stammen aus der Vorab-Messreihe (meist Zufalls-Seeds 0 bis 29, 30 Ins
 - **Orakel:** `tests/test_oracle_gewinn_touren.py` rechnet das Optimum auf Kleinstinstanzen mit einem anderen Weg (Held-Karp je Teilmenge plus Partitions-DP), prüft, dass kein Verfahren darüber liegt und CP-SAT dasselbe Optimum beweist,
   vergleicht den Greedy mit einer unabhängigen Neuimplementierung (Brüche) und rechnet Halteliste, Anteil am Besten und Skalierung des Budgets nach.
 - **Messreihe:** der Kern ist wörtlich aus der Vorab-Messreihe übernommen (26 Prüfungen dort, darunter dasselbe Orakel auf 12 Instanzen); `tests/test_results.py` und `tests/test_claims.py` prüfen die Ergebnisdatei und jede Zahl dieses README.
-- **Presets:** vollständig, Werte sind gemessene Stufen, Seeds außerhalb der Messreihe, Abnahmekriterium je Preset an der angezeigten Instanz (`tests/test_stories.py`, `tools/PRESET_SWEEP.md`).
+- **Presets:** vollständig, Werte sind gemessene Stufen, Zufalls-Seeds außerhalb der Messreihe, Abnahmekriterium je Preset an der angezeigten Instanz (`tests/test_stories.py`, `tools/PRESET_SWEEP.md`).
 - **Oberfläche:** AppTest-Rauchtest (jeder Button, jede Stufe jedes Reglers, OR-Tools- und Optimum-Knopf, jede Ansicht), Layout (Schnellstart oben, fester Kopf, aktives Preset hervorgehoben) und Footer-Test.
 
 ## Dateistruktur

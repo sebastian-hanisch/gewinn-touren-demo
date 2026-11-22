@@ -102,7 +102,7 @@ with st.sidebar:
     k = st.slider("Fahrzeuge", *bounds("k_slider"), key="k_slider", help="Jedes Fahrzeug fährt eine Tour. Bei gleichem Budgetanteil sinkt das Zeitbudget je Tour mit der Fahrzeugzahl.")
     f = st.select_slider(
         "Zeitbudget je Tour", options=options("f_slider"), key="f_slider", format_func=_fmt_f,
-        help="Anteil eines Rundreise-Richtwerts über alle Kunden (Nächster Nachbar plus 2-opt, einschließlich Service), geteilt durch die Zahl der Fahrzeuge. 1 heißt: etwa so viel Zeit, wie alle Kunden zusammen brauchen (ohne Gewähr, dass dann alle bedient werden).")
+        help="Anteil eines Rundreise-Richtwerts über alle Kunden (Nächster Nachbar plus 2-opt, einschließlich Servicezeiten), geteilt durch die Zahl der Fahrzeuge. 1 heißt: etwa so viel Zeit, wie alle Kunden zusammen brauchen (ohne Gewähr, dass dann alle bedient werden).")
     ptype = st.radio("Prämien", options("ptype_radio"), key="ptype_radio", format_func=lambda p: C.PTYPE_LABELS[p],
                      help="Gleich: jeder Kunde 10. Gestreut: lognormal, Mittel 60. Fern: je weiter vom Depot, desto mehr.")
     st.markdown("**Rechnen**")
@@ -221,7 +221,7 @@ with st.expander("🔧 Wie wir das erreichen – vollständiger Methodenvergleic
     tab_plan, tab_methods, tab_moves, tab_or, tab_exact, tab_series = st.tabs(
         ["🗺️ Tourenplan", "📊 Verfahren", "🧩 Zugarten", "🧰 OR-Tools", "🧮 Exakt (CP-SAT)", "📈 Messreihe"])
     with tab_plan:
-        st.markdown(f"Halteliste für **{view.label}** (Ankunft in Minuten nach Start, Service {C.SERVICE_MIN} min je Kunde).")
+        st.markdown(f"Halteliste für **{view.label}** (Ankunft in Minuten nach Start, Servicezeit {C.SERVICE_MIN} min je Kunde).")
         for ri, route in enumerate(view.routes):
             if not route:
                 st.caption(f"Tour {ri + 1}: leer")
@@ -292,7 +292,7 @@ with st.expander("🔧 Wie wir das erreichen – vollständiger Methodenvergleic
                     getattr(st, kind)(text)
                     st.caption(f"Rechenzeit {res['sec']:.1f} s, Status {res['status']}.")
     with tab_series:
-        st.markdown("Alle gemessenen Zellen (Seeds 0 bis 29, je Zelle bis zu 30 Instanzen, Mittel über die Instanzen). „Punkte“ sind Prozentpunkte vom besten bekannten Wert.")
+        st.markdown("Alle gemessenen Zellen (Zufalls-Seeds 0 bis 29, je Zelle bis zu 30 Instanzen, Mittel über die Instanzen). „Punkte“ sind Prozentpunkte vom besten bekannten Wert.")
         rows = []
         for c_ in sorted(R.load()["cells"], key=lambda c_: (c_["ptype"], c_["n"], c_["K"], c_["f"])):
             rows.append({"Prämien": C.PTYPE_WORDS[c_["ptype"]], "n": c_["n"], "Fahrzeuge": c_["K"], "Budgetanteil": c_["f"], "Instanzen": c_["n_inst"],
@@ -314,7 +314,7 @@ with st.expander("🔧 Wie wir das erreichen – vollständiger Methodenvergleic
 with st.expander("Wie funktioniert diese Demo?"):
     st.markdown(
         f"""
-**Die Aufgabe.** Ein Depot, {settings.n} Kunden, {settings.k} Fahrzeug(e). Jede Tour darf höchstens {a.inst.tmax} Minuten dauern (Fahrt, {C.SERVICE_MIN} Minuten Service je Kunde, Rückkehr). Jeder Kunde bringt eine Prämie,
+**Die Aufgabe.** Ein Depot, {settings.n} Kunden, {settings.k} Fahrzeug(e). Jede Tour darf höchstens {a.inst.tmax} Minuten dauern (Fahrt, {C.SERVICE_MIN} Minuten Servicezeit je Kunde, Rückkehr). Jeder Kunde bringt eine Prämie,
 jeder wird höchstens einmal bedient. Gesucht ist die Auswahl und Reihenfolge mit der größten Prämiensumme. Das Zeitbudget ist ein Anteil einer Rundreise über alle Kunden, geteilt durch die Fahrzeugzahl; die Fahrzeit ist
 aufgerundet 1,2 × Distanz (Dreiecksungleichung gilt).
 
@@ -322,14 +322,14 @@ aufgerundet 1,2 × Distanz (Dreiecksungleichung gilt).
 - *Höchste Prämie zuerst:* Kunden nach Prämie sortieren und jeweils an der günstigsten zulässigen Stelle einfügen.
 - *Verhältnis-Greedy:* wiederholt den Kunden mit der größten Prämie je Zusatzzeit einfügen.
 - *Lokalsuche:* Routenzüge, Einfügen, Ersetzen (siehe Tab Zugarten).
-- *Eigene Suche (ILS):* Kunden entfernen, verrauscht neu einfügen, Lokalsuche; deterministisch bei gleichem Seed und gleicher Iterationszahl.
+- *Eigene Suche (ILS):* Kunden entfernen, verrauscht neu einfügen, Lokalsuche; deterministisch bei gleichem Zufalls-Seed und gleicher Iterationszahl.
 - *OR-Tools:* Routing mit Strafe für nicht bediente Kunden, in zwei Einstellungen.
 - *CP-SAT:* exakt, mit Schranke; bis {C.EXACT_N_MAX} Kunden immer angeboten, darüber nur dort, wo die Messreihe in mindestens {R.num(100 * C.EXACT_MIN_PROOF_SHARE, 0)} % der Instanzen ein Optimum bewies.
 
 **„Bester bekannter Wert“** ist das Maximum aller Verfahren auf der Instanz (bei bewiesenem Optimum das Optimum). Die eigene Suche stellt dabei meist das Maximum: Ihr Anteil ist daher per Konstruktion nahe 100 %.
 Wo kein Optimum bewiesen ist, kann das wahre Optimum höher liegen.
 
-**Was die Live-Zahlen bedeuten.** Sie gelten für diese eine Instanz. Die Aussagen der Kernfragen 2 und 3 stammen aus einer vorgerechneten Messreihe (Seeds 0 bis 29, je Zelle bis zu 30 Instanzen);
+**Was die Live-Zahlen bedeuten.** Sie gelten für diese eine Instanz. Die Aussagen der Kernfragen 2 und 3 stammen aus einer vorgerechneten Messreihe (Zufalls-Seeds 0 bis 29, je Zelle bis zu 30 Instanzen);
 die eingestellte Kombination ist nur dann gemessen, wenn es dazu eine Zelle gibt, sonst steht die nächstliegende.
 
 **🚧 Wo die Annahmen enden**
@@ -349,13 +349,13 @@ with st.expander("📐 Mathematische Formulierung"):
     # erklaerseite:lesehilfe:start (erzeugt von tools/set_demo_explainer.py (Website-Repo) aus tools/content/explainers/gewinn-touren-erklaert.json, nicht von Hand ändern)
     st.markdown(
         r"""
-**Lesehilfe.** Gegeben sind ein Depot, $n$ Kunden mit Prämie $p_i$, Fahrzeiten $t_{ij}$, ein Service $s$ je Kunde und $K$ Fahrzeuge mit Zeitbudget $T$ je Tour. Gesucht ist, welche Kunden bedient werden und in welcher Reihenfolge, sodass die Prämiensumme möglichst groß ist.
+**Lesehilfe.** Gegeben sind ein Depot, $n$ Kunden mit Prämie $p_i$, Fahrzeiten $t_{ij}$, eine Servicezeit $s$ je Kunde und $K$ Fahrzeuge mit Zeitbudget $T$ je Tour. Gesucht ist, welche Kunden bedient werden und in welcher Reihenfolge, sodass die Prämiensumme möglichst groß ist.
 
 | Symbol | Bedeutung |
 |---|---|
 | $p_i$ | Prämie von Kunde $i$ |
 | $t_{ij}$ | Fahrzeit von $i$ nach $j$ (Depot = 0) |
-| $s$ | Service je Kunde |
+| $s$ | Servicezeit je Kunde |
 | $T$ | Zeitbudget je Tour |
 | $y_i$ | 1, wenn Kunde $i$ bedient wird |
 | $x_{ijk}$ | 1, wenn Fahrzeug $k$ von $i$ direkt nach $j$ fährt |
@@ -372,7 +372,7 @@ $$\\sum_{k}\\sum_{j} x_{ijk} = y_i \\quad (i = 1, \\dots, n)$$
 
 $$\\sum_{(i,j)} t_{ij}\\, x_{ijk} + s \\sum_{i=1}^{n}\\sum_{j} x_{ijk} \\le T \\quad (k = 1, \\dots, K)$$
 
-Dazu gehören Binärbedingungen für $x$ und $y$, Flusserhaltung je Fahrzeug und Kunde (Zufluss gleich Abfluss), höchstens ein Abgang je Fahrzeug aus dem Depot mit Rückkehr dorthin und ein Teiltourverbot (keine Kreise ohne Depot). $T$ ist der Anteil $f$ eines Rundreise-Richtwerts $R$ über alle Kunden, geteilt durch $K$: $T = f \\cdot R / K$; der Service $s$ wird je angefahrenem Kunden gerechnet, nicht am Depot. In CP-SAT wird das als Mehrfach-Kreis mit einer Selbstschleife für $y_i = 0$ und kumulierter Zeit $L_j \\ge L_i + t_{ij} + s$ je gewähltem Bogen abgebildet.
+Dazu gehören Binärbedingungen für $x$ und $y$, Flusserhaltung je Fahrzeug und Kunde (Zufluss gleich Abfluss), höchstens ein Abgang je Fahrzeug aus dem Depot mit Rückkehr dorthin und Subtour-Eliminierungsbedingungen (keine Kreise ohne Depot). $T$ ist der Anteil $f$ eines Rundreise-Richtwerts $R$ über alle Kunden, geteilt durch $K$: $T = f \\cdot R / K$; die Servicezeit $s$ wird je angefahrenem Kunden gerechnet, nicht am Depot. In CP-SAT wird das als Mehrfach-Kreis mit einer Selbstschleife für $y_i = 0$ und kumulierter Zeit $L_j \\ge L_i + t_{ij} + s$ je gewähltem Bogen abgebildet.
 
 **Verhältnis-Greedy.** Wähle $\\arg\\max_i \\; p_i / \\Delta_i$ mit $\\Delta_i$ = billigste zulässige Zusatzzeit beim Einfügen von $i$; wiederhole, bis nichts mehr passt.
 
